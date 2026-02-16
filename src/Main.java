@@ -6,11 +6,19 @@ public class Main {
     public static void main(String[] args) {
         BankService service = new BankService();
         Scanner sc = new Scanner(System.in);
+        String fName;
+        String lName;
+        String email;
+        String phone;
+        String address;
+        double amount;
+        long accNumber;
         int choice;
+
         do {
-            System.out.println("\n==============================");
+            System.out.println("\n=============================================================");
             System.out.println("Welcome to SS_Sev Bank");
-            System.out.println("==============================");
+            System.out.println("=============================================================");
             System.out.println("Choose one of the following options : ");
             System.out.println("1. Create new account");
             System.out.println("2. Close account");
@@ -21,41 +29,41 @@ public class Main {
             System.out.println("7. View account details");
             System.out.println("8. Update account details");
             System.out.println("9. Exit");
-            System.out.println("==============================");
+            System.out.println("=============================================================");
             System.out.print("Enter your choice : ");
 
             choice = sc.nextInt();
             sc.nextLine();
             switch (choice){
                 case 1:
-                    System.out.println("Enter Account holder's first name : ");
-                    String fName = sc.nextLine();
-                    System.out.println("Enter Account holder's last name : ");
-                    String lName = sc.nextLine();
-                    System.out.println("Enter Account holder's Email : ");
-                    String email = sc.nextLine();
-                    System.out.println("Enter Account holder's phone number : ");
-                    String phone = sc.nextLine();
-                    System.out.println("Enter Account holder's address : ");
-                    String address = sc.nextLine();
+                    System.out.print("Enter first name : ");
+                    fName = sc.nextLine();
+                    System.out.print("Enter last name : ");
+                    lName = sc.nextLine();
+                    System.out.print("Enter Email : ");
+                    email = sc.nextLine();
+                    System.out.print("Enter phone number : ");
+                    phone = sc.nextLine();
+                    System.out.print("Enter address : ");
+                    address = sc.nextLine();
                     service.createAccount(fName, lName, email, phone, address);
                     break;
                 case 2:
                     System.out.print("Enter bank account number : ");
-                    long accNumber = sc.nextLong();
+                    accNumber = sc.nextLong();
                     service.closeAccount(accNumber);
                     break;
                 case 3:
                     System.out.print("Enter bank account number : ");
                     accNumber = sc.nextLong();
-                    System.out.print("Enter the amount to withdraw :");
-                    double amount = sc.nextDouble();
+                    System.out.print("Enter the amount to withdraw : ");
+                    amount = sc.nextDouble();
                     service.withdraw(accNumber, amount);
                     break;
                 case 4:
                     System.out.print("Enter bank account number : ");
                     accNumber = sc.nextLong();
-                    System.out.print("Enter the amount to deposit :");
+                    System.out.print("Enter the amount to deposit : ");
                     amount = sc.nextDouble();
                     service.deposit(accNumber, amount);
                     break;
@@ -79,26 +87,29 @@ public class Main {
                     service.accountDetails(accNumber);
                     break;
                 case 8:
-                    System.out.println("Enter  first name : ");
-                     fName = sc.nextLine();
-                    System.out.println("Enter  last name : ");
-                     lName = sc.nextLine();
-                    System.out.println("Enter  Email : ");
-                     email = sc.nextLine();
-                    System.out.println("Enter  phone number : ");
-                     phone = sc.nextLine();
-                    System.out.println("Enter  address : ");
-                     address = sc.nextLine();
-                     service.updateCustomerDetails(fName, lName, email, phone, address);
-                     break;
+                    System.out.print("Enter your bank account number : ");
+                    accNumber = sc.nextLong();
+                    sc.nextLine();
+                    System.out.print("Enter first name : ");
+                    fName = sc.nextLine();
+                    System.out.print("Enter last name : ");
+                    lName = sc.nextLine();
+                    System.out.print("Enter Email : ");
+                    email = sc.nextLine();
+                    System.out.print("Enter phone number : ");
+                    phone = sc.nextLine();
+                    System.out.print("Enter  address : ");
+                    address = sc.nextLine();
+                    service.updateCustomerDetails(fName, lName, email, phone, address, accNumber);
+                    break;
                 case 9:
-                    System.out.println("Thank you for visiting SS_Sev bank!");
-                    System.out.println();
-                    System.out.println("==============================");
+                    System.out.println("\n=============================================================");
+                    System.out.println("Thank you for visiting SS_Sev bank. Have a nice day ahead! 😊😊");
+                    System.out.println("=============================================================");
                     break;
                 default:
-                    System.out.println("Invalid selection!");
-                    System.out.println("Please choose correct option which are available ");
+                    System.out.println("\nInvalid selection!");
+                    System.out.println("Please choose correct option which are available\n");
             }
         }while(choice != 9);
     }

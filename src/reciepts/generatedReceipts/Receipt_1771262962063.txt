@@ -1,0 +1,13 @@
+=====================================
+            BANK RECEIPT             
+=====================================
+Transaction Type    : Transfer
+Account Number      : 6870983711
+Amount              : 250.00
+Deposited to        : 4201162116
+Description         : Deposit to account via transfer
+Transaction Date    : 16-02-2026 22:59:22
+Available Balance   : 250.0
+=====================================
+        Thank You For Banking        
+=====================================

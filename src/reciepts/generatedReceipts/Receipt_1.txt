@@ -1,0 +1,12 @@
+=====================================
+            BANK RECEIPT             
+=====================================
+Transaction Type    : Withdrawal
+Account Number      : 4201162116
+Amount              : 200.00
+Related Account     : 0
+Description         : Withdrawal from account
+Transaction Date    : 2026-02-14 02:02:56
+=====================================
+        Thank You For Banking        
+=====================================

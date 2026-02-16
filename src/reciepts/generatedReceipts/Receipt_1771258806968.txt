@@ -1,0 +1,13 @@
+=====================================
+            BANK RECEIPT             
+=====================================
+Transaction Type    : Deposit
+Account Number      : 4201162116
+Amount              : 30.00
+Related Account     : 0
+Description         : Deposit to account
+Transaction Date    : 16-02-2026 21:50:06
+Available Balance   : 1250.0
+=====================================
+        Thank You For Banking        
+=====================================

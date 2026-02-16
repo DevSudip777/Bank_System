@@ -22,6 +22,13 @@ public class Transaction {
         this.description = description;
     }
 
+    public void setTransactionId(int id){
+        this.transactionID = id;
+    }
+    public int getTransactionId(){
+        return transactionID;
+    }
+
     public long getAccountNumber() {
         return accountNumber;
     }

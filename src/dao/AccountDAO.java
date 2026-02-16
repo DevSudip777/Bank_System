@@ -1,5 +1,6 @@
 package dao;
 
+import exception.AccountNotFoundException;
 import model.Account;
 import util.DBUtil;
 
@@ -21,13 +22,12 @@ public class AccountDAO {
             ps.setDate(6, Date.valueOf(LocalDate.now()));
 
             int updatedRows = ps.executeUpdate();
-            if(updatedRows == 0) return false;
+            return updatedRows > 0;
         }
-        return true;
     }
 
     // getting account from database
-    public Account getAccount( long accNumber) throws SQLException{
+    public Account getAccount( long accNumber) throws SQLException, AccountNotFoundException{
         // sql query preparation
         String sql = "SELECT * FROM bankaccounts WHERE AccountNumber = ?";
         try (Connection conn = DBUtil.getConnection();
@@ -39,7 +39,11 @@ public class AccountDAO {
             ResultSet record = ps.executeQuery();
 
             // extract details from the resultSet and create an object of Account class
-            record.next();
+            boolean flag = record.next();
+            if(!flag){
+                throw new AccountNotFoundException("Account does not exist at SS_Sev bank");
+            }
+            // return new object
             return new Account(
                     record.getLong("AccountNumber"),
                     record.getInt("CustomerID"),
@@ -47,6 +51,7 @@ public class AccountDAO {
                     record.getDouble("Balance"),
                     record.getString("Status"),
                     record.getDate("OpeningDate").toLocalDate());
+
         }
 
     }
@@ -73,7 +78,6 @@ public class AccountDAO {
             ps.setLong(2, account.getAccountNumber());
 
             ps.executeUpdate();
-
         }
     }
 
@@ -86,8 +90,8 @@ public class AccountDAO {
             ps.setDouble(1, account.getBalance());
             ps.setLong(2, account.getAccountNumber());
 
-            ps.executeUpdate();
-            return ps.executeUpdate() > 0;
+            int rowsEffected = ps.executeUpdate();
+            return rowsEffected > 0;
         }
     }
 

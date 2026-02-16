@@ -10,12 +10,14 @@ import exception.InvalidAmountException;
 import model.Account;
 import model.Customer;
 import model.Transaction;
+import reciepts.ReceiptGenerator;
 import util.DBUtil;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class BankService {
     private final CustomerDAO customerDAO = new CustomerDAO();
@@ -45,7 +47,7 @@ public class BankService {
             long accNumber = this.generateAccountNumber();
             Account account = new Account(accNumber, cusId, "Savings", 0.0, "Active", LocalDate.now());
             if(accountDAO.createAccount(account)){
-                System.out.println("Account create successfully. \n Your account number : " + accNumber);
+                System.out.println("Account created successfully!.\nYour account number : " + accNumber);
             }else{
                 System.out.println("Failed to create account.");
             }
@@ -99,9 +101,9 @@ public class BankService {
                 // update transaction schema bt adding new transaction instance
                 transactionDAO.addTransaction(t);
                 // receipt generation
-
+                ReceiptGenerator.generateReceipt(t, account);
                 // completion the balance update message
-                System.out.println("Withdrawal successful! \n Withdrawal amount : " + amount + "\n Available balance : " + account.getBalance());
+                System.out.println("Withdrawal successful!\nWithdrawal amount : " + amount + "\nAvailable balance : " + account.getBalance());
             }
         }
         catch (InvalidAmountException | InsufficientBalanceException | SQLException | AccountClosedException | AccountNotFoundException e){
@@ -156,7 +158,8 @@ public class BankService {
                 transactionDAO.addTransaction(t);
 
                 // receipt generation
-
+//                ReceiptGenerator receiptGenerator = new ReceiptGenerator();
+                ReceiptGenerator.generateReceipt(t, account);
                 // completion the balance update message
                 System.out.println("Deposit successful! \nDeposit amount : " + amount + "\nAvailable balance : " + account.getBalance());
             }
@@ -223,13 +226,19 @@ public class BankService {
                     recAccount.setBalance(recAccount.getBalance() + amount);
 
                     boolean receiverAccountUpdateState = accountDAO.transactionUpdateBalance(recAccount, conn);
+                    // object creation of transaction
                     Transaction t2 = new Transaction(receiverAccNumber, "Transfer", amount, LocalDateTime.now(), accNumber, "Deposit to account via transfer");
-                    transactionDAO.addTransferTransaction(t1, conn);
+                    // add the object into SQL database
+                    transactionDAO.addTransferTransaction(t2, conn);
 
                     // receipt generation for transactions - t1 and t2
                     if(senderAccountUpdateState && receiverAccountUpdateState){
                         // save all changes
                         conn.commit();
+                        // receipt for transaction of sender
+                        ReceiptGenerator.generateReceipt(t1, account);
+                        // receipt for transaction of receiver
+                        ReceiptGenerator.generateReceipt(t2, recAccount);
                         System.out.println("Transaction Successful.\nAvailable balance :" + account.getBalance());
                     }
 
@@ -240,16 +249,48 @@ public class BankService {
                 }
             }
         }
-        catch (SQLException | AccountNotFoundException | AccountClosedException | InvalidAmountException e) {
+        catch (SQLException | AccountNotFoundException | AccountClosedException | InvalidAmountException |
+               InsufficientBalanceException e) {
             System.out.println("Error : " + e.getMessage());
-        } catch (InsufficientBalanceException e) {
-            throw new RuntimeException(e);
         }
     }
     public void transactionHistory(long accNumber){
-        // check if the account exists in DB, get the bankAccount
+        try {
+            // check if the account exists in DB, get the bankAccount
+            Account account = accountDAO.getAccount(accNumber);
+            if (account == null) {
+                throw new AccountNotFoundException("Your account does not exist at SS-Sev bank");
+            }
+            // bank account already exist. But, it's already closed.
+            else if (account.getStatus().equalsIgnoreCase("closed")) {
+                throw new AccountClosedException("Your account already closed.");
+            }
+            else {
+                // if account is available then, get all transaction related to this bankAccount.
+                List<Transaction> transactionList = transactionDAO.getTransactions(accNumber);
+                if(transactionList.isEmpty()){
+                    System.out.println("No transactions were made by this account " + accNumber);
+                }else{
+                    for(Transaction t : transactionList){
+                        System.out.println();
+                        System.out.println("Transaction Id      : " + t.getTransactionId());
+                        System.out.println("Transaction Date    : " + t.getTransactionDate());
+                        System.out.println("Transaction Type    : " + t.getTransactionType());
+                        System.out.println("Transaction Amount  : " + t.getAmount());
+                        if(t.getTransactionType().equalsIgnoreCase("Transfer")){
+                            System.out.println("From                : " + t.getRelatedAccountNumber());
+                            System.out.println("To(your account)    : " + t.getAccountNumber());
+                        }
+                        System.out.println("Description         : " + t.getDescription());
+                        System.out.println();
+                        System.out.println();
+                    }
+                }
+            }
+        }catch (AccountNotFoundException | AccountClosedException | SQLException e) {
+            System.out.println("Error : " + e.getMessage());
+        }
 
-        // if account is available then, get all transaction related to this bankAccount.
 
     }
     public void accountDetails(long accountNumber) {
@@ -257,23 +298,55 @@ public class BankService {
             Account account = accountDAO.getAccount(accountNumber);
             if (account == null) {
                 // Throw exception if account is not found
-                throw new AccountNotFoundException("Account does not exist at SS-sev Bank.");
+                throw new AccountNotFoundException("Account does not exist at SS_Sev Bank.");
             }
-            System.out.println("=====================================");
+            System.out.println("=============================================================");
             System.out.println("\t\t\tACCOUNT DETAILS");
-            System.out.println("=====================================");
-            System.out.println("Account Holder Name : " );
-            System.out.println("Account Number : " + account.getAccountNumber());
-            System.out.println("Account Type : " + account.getAccountType());
-            System.out.println("Account Status : " + account.getStatus());
-            System.out.println("Account opening date : " + account.getOpeningDate());
-            System.out.println("Account Balance : " + account.getBalance());
-            System.out.println("=====================================");
+            System.out.println("=============================================================");
+            System.out.printf(
+                    "Account Holder's Name : %s%n" +
+                    "Account Number        : %d%n" +
+                    "Account Type          : %s%n" +
+                    "Account Status        : %s%n" +
+                    "Account Opening Date  : %tF%n" +
+                    "Account Balance       : %.2f%n",
+                    customerDAO.getCustomerName(accountNumber),
+                    account.getAccountNumber(),
+                    account.getAccountType(),
+                    account.getStatus(),
+                    account.getOpeningDate(),
+                    account.getBalance()
+            );
+            System.out.println("============================================================");
         }catch (AccountNotFoundException  | SQLException e){
             System.out.println("Error : " + e.getMessage());
         }
     }
-    public void updateCustomerDetails(String fName, String lName, String email, String phone, String address){
+    public void updateCustomerDetails(String fName, String lName, String email, String phone, String address, long accNumber) {
+        try {
+            // check if the account is existed or not
+            Account account = accountDAO.getAccount(accNumber);
+            if (account == null) {
+                throw new AccountNotFoundException("Account does not exist at SS-Sev bank");
+            }
+            // bank account already exist. But, it's already closed.
+            else if (account.getStatus().equalsIgnoreCase("closed")) {
+                throw new AccountClosedException("Account already closed.");
+            }
+            // Update the account
+            else{
+                Customer customer = new Customer(fName, lName, email, phone, address);
+                int customerID = account.getCustomerId();
+                if(customerDAO.updateDetails(customer, customerID)){
+                    System.out.println("\nCustomer update process successful!");
+                }else{
+                    System.out.println("\nCustomer update process failed!");
+                }
+            }
 
+        }
+        catch (SQLException | AccountNotFoundException | AccountClosedException e){
+            System.out.println("Error : " + e.getMessage());
+        }
     }
 }

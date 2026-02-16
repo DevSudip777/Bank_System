@@ -1,19 +1,17 @@
 package dao;
+import exception.AccountNotFoundException;
 import model.Customer;
 import util.DBUtil;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.LocalDateTime;
+import java.sql.*;
 
 public class CustomerDAO {
+    private final AccountDAO accountDAO = new AccountDAO();
     public int createCustomer(Customer customer) throws SQLException {
         String sql = "INSERT INTO customers(FirstName, LastName, Email, PhoneNumber, Address) VALUES (?, ?, ?, ?, ?)";
         // try with resource block
         try(Connection conn = DBUtil.getConnection();
-            PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)
+            PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
         )
         {
             ps.setString(1, customer.getFirstName());
@@ -21,20 +19,58 @@ public class CustomerDAO {
             ps.setString(3, customer.getEmail());
             ps.setString(4, customer.getPhone());
             ps.setString(5, customer.getAddress());
-//            ps.setString(6, LocalDateTime.now().toString());
 
             int updatedRows = ps.executeUpdate();
             if (updatedRows == 0) {
                 return -1;
             }
             // store the response
+            // gives all auto generated keys from SQL database
             ResultSet keys = ps.getGeneratedKeys();
             // process the response as per your requirement.
             if (keys.next()) {
+                // it gives key that is generated
                 return keys.getInt(1);
             }
-
             return -1;
+        }
+    }
+    // getting full name from database
+    public String getCustomerName(long accountNumber) throws SQLException, AccountNotFoundException {
+
+        String sql = "SELECT FirstName, LastName FROM customers Where CustomerID = ?";
+        try(Connection conn = DBUtil.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql))
+        {
+            int customerId = accountDAO.getAccount(accountNumber).getCustomerId();
+            ps.setInt(1, customerId);
+
+            // execute query
+            ResultSet record = ps.executeQuery();
+            boolean flag = record.next();
+            if(!flag){
+                throw new AccountNotFoundException("Customer does not exist at SS_Sev bank");
+            }
+
+            return record.getString("FirstName") +" "+ record.getString("LastName");
+        }
+    }
+
+    // update the customer details to the SQL database
+    public boolean updateDetails(Customer customer, int customerID) throws SQLException{
+        String sql = "UPDATE customers SET FirstName = ?, LastName = ?, Email = ?, PhoneNumber = ?, Address = ? WHERE CustomerID = ?";
+        try(Connection conn = DBUtil.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setString(1, customer.getFirstName());
+            ps.setString(2, customer.getLastName());
+            ps.setString(3, customer.getEmail());
+            ps.setString(4, customer.getPhone());
+            ps.setString(5, customer.getAddress());
+
+            ps.setInt(6, customerID);
+
+            // execute the query
+            return  ps.executeUpdate() > 0;
         }
     }
 }
