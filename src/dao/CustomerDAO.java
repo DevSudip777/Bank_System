@@ -57,17 +57,63 @@ public class CustomerDAO {
     }
 
     // update the customer details to the SQL database
-    public boolean updateDetails(Customer customer, int customerID) throws SQLException{
-        String sql = "UPDATE customers SET FirstName = ?, LastName = ?, Email = ?, PhoneNumber = ?, Address = ? WHERE CustomerID = ?";
+    public boolean updateFirstName(String fName, int customerID) throws SQLException{
+        String sql = "UPDATE customers SET FirstName = ? WHERE CustomerID = ?";
         try(Connection conn = DBUtil.getConnection();
         PreparedStatement ps = conn.prepareStatement(sql)){
-            ps.setString(1, customer.getFirstName());
-            ps.setString(2, customer.getLastName());
-            ps.setString(3, customer.getEmail());
-            ps.setString(4, customer.getPhone());
-            ps.setString(5, customer.getAddress());
+            ps.setString(1, fName);
 
-            ps.setInt(6, customerID);
+            ps.setInt(2, customerID);
+
+            // execute the query
+            return  ps.executeUpdate() > 0;
+        }
+    }
+    public boolean updateLastName(String lName, int customerID) throws SQLException{
+        String sql = "UPDATE customers SET LastName = ? WHERE CustomerID = ?";
+        try(Connection conn = DBUtil.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setString(1, lName);
+            ps.setInt(2, customerID);
+
+            // execute the query
+            return  ps.executeUpdate() > 0;
+        }
+    }
+    public boolean updateEmail(String email, int customerID) throws SQLException{
+        String sql = "UPDATE customers SET Email = ? WHERE CustomerID = ?";
+        try(Connection conn = DBUtil.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql)){
+
+            ps.setString(1, email);
+
+            ps.setInt(2, customerID);
+
+            // execute the query
+            return  ps.executeUpdate() > 0;
+        }
+    }
+    public boolean updatePhone(String phone, int customerID) throws SQLException{
+        String sql = "UPDATE customers SET PhoneNumber = ? WHERE CustomerID = ?";
+        try(Connection conn = DBUtil.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql)){
+
+            ps.setString(1, phone);
+
+            ps.setInt(2, customerID);
+
+            // execute the query
+            return  ps.executeUpdate() > 0;
+        }
+    }
+    public boolean updateAddress(String address, int customerID) throws SQLException{
+        String sql = "UPDATE customers SET Address = ? WHERE CustomerID = ?";
+        try(Connection conn = DBUtil.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql)){
+
+            ps.setString(1, address);
+
+            ps.setInt(2, customerID);
 
             // execute the query
             return  ps.executeUpdate() > 0;

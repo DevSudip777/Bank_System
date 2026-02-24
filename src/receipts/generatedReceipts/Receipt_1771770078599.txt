@@ -1,0 +1,12 @@
+=====================================
+            BANK RECEIPT             
+=====================================
+Transaction ID      : 20
+Transaction Type    : Deposit
+Amount              : 500.00
+Description         : Deposit to account
+Transaction Date    : 22-02-2026 19:51:18
+Available Balance   : 1000.0
+=====================================
+        Thank You For Banking        
+=====================================

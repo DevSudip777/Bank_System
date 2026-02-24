@@ -10,13 +10,14 @@ import exception.InvalidAmountException;
 import model.Account;
 import model.Customer;
 import model.Transaction;
-import reciepts.ReceiptGenerator;
+import receipts.ReceiptGenerator;
 import util.DBUtil;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class BankService {
@@ -99,7 +100,8 @@ public class BankService {
                 // create new transaction object
                 Transaction t = new Transaction(accNumber, "Withdrawal", amount, LocalDateTime.now(), 0, "Withdrawal from account");
                 // update transaction schema bt adding new transaction instance
-                transactionDAO.addTransaction(t);
+                int transactionID = transactionDAO.addTransaction(t);
+                t.setTransactionId(transactionID);
                 // receipt generation
                 ReceiptGenerator.generateReceipt(t, account);
                 // completion the balance update message
@@ -133,6 +135,8 @@ public class BankService {
         return currBalance;
     }
 
+// -----------------------------------------Deposit method----------------------------------------------------------
+
     public void deposit(long accNumber, double amount){
         try {
             // search the specified bank account
@@ -155,10 +159,10 @@ public class BankService {
                 // create new transaction object
                 Transaction t = new Transaction(accNumber, "Deposit", amount, LocalDateTime.now(), 0, "Deposit to account");
                 // update transaction schema by adding new transaction instance
-                transactionDAO.addTransaction(t);
+                int transactionID = transactionDAO.addTransaction(t);
+                t.setTransactionId(transactionID);
 
                 // receipt generation
-//                ReceiptGenerator receiptGenerator = new ReceiptGenerator();
                 ReceiptGenerator.generateReceipt(t, account);
                 // completion the balance update message
                 System.out.println("Deposit successful! \nDeposit amount : " + amount + "\nAvailable balance : " + account.getBalance());
@@ -169,17 +173,23 @@ public class BankService {
         }
     }
 
+    //------------------------------------Transfer Method-----------------------------------------------------
 
     public void transfer(long accNumber, long receiverAccNumber, double amount){
         try (Connection conn = DBUtil.getConnection()){
+
+            // If both accountNumber reference the same account
+            if (accNumber == receiverAccNumber) {
+                throw new IllegalArgumentException("Sender and receiver account cannot be same.");
+            }
+
             // check the amount is transferable or not
             if (amount <= 0) {
                 throw new InvalidAmountException("Amount must be positive or greater than 0");
             }
 
             // search the specified sender's bank account.
-
-            Account account = accountDAO.getAccount(accNumber);
+            Account account = accountDAO.getTransferAccount(accNumber, conn);
             if (account == null) {
                 throw new AccountNotFoundException("Your account does not exist at SS-Sev bank");
             }
@@ -189,8 +199,8 @@ public class BankService {
             }
 
             // search the specified receiver's bank account
-
-            Account recAccount = accountDAO.getAccount(receiverAccNumber);
+            // bcs getAccount uses another connection
+            Account recAccount = accountDAO.getTransferAccount(receiverAccNumber, conn);
             if (recAccount == null){
                 throw new AccountNotFoundException("Receiver's account does not exist at SS-Sev bank");
             }
@@ -219,17 +229,21 @@ public class BankService {
 
                     // call AccountDAO object to update the balance field in the DB by using the Account object.
                     boolean senderAccountUpdateState = accountDAO.transactionUpdateBalance(account, conn);
-                    Transaction t1 = new Transaction(accNumber, "Transfer", amount, LocalDateTime.now(), receiverAccNumber, "Withdrawal from account for transfer");
-                    transactionDAO.addTransferTransaction(t1, conn);
+                    Transaction t1 = new Transaction(accNumber, "Debit", amount, LocalDateTime.now(), receiverAccNumber, "Debited from account for transfer");
+                    int transactionId = transactionDAO.addTransferTransaction(t1, conn);
+                    t1.setTransactionId(transactionId);
+
+
 
                     // Second update the property - balance - in the recAccount object
                     recAccount.setBalance(recAccount.getBalance() + amount);
 
                     boolean receiverAccountUpdateState = accountDAO.transactionUpdateBalance(recAccount, conn);
                     // object creation of transaction
-                    Transaction t2 = new Transaction(receiverAccNumber, "Transfer", amount, LocalDateTime.now(), accNumber, "Deposit to account via transfer");
-                    // add the object into SQL database
-                    transactionDAO.addTransferTransaction(t2, conn);
+                    Transaction t2 = new Transaction(receiverAccNumber, "Credit", amount, LocalDateTime.now(), accNumber, "Credited to account via transfer");
+                     //add the object into SQL database
+                    int transactionId1 = transactionDAO.addTransferTransaction(t2, conn);
+                    t2.setTransactionId(transactionId1);
 
                     // receipt generation for transactions - t1 and t2
                     if(senderAccountUpdateState && receiverAccountUpdateState){
@@ -239,9 +253,12 @@ public class BankService {
                         ReceiptGenerator.generateReceipt(t1, account);
                         // receipt for transaction of receiver
                         ReceiptGenerator.generateReceipt(t2, recAccount);
-                        System.out.println("Transaction Successful.\nAvailable balance :" + account.getBalance());
+                        System.out.println("\nTransaction Successful.\nAvailable balance : " + account.getBalance() + "\n");
                     }
-
+                    else{
+                        conn.rollback();
+                        System.out.println("Transaction Failed!");
+                    }
                 }catch (SQLException e){
                     conn.rollback();
                     System.out.println("Transaction failed: " + e.getMessage());
@@ -271,13 +288,18 @@ public class BankService {
                 if(transactionList.isEmpty()){
                     System.out.println("No transactions were made by this account " + accNumber);
                 }else{
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+                    System.out.println("\n========== All transaction histories ==========");
                     for(Transaction t : transactionList){
                         System.out.println();
                         System.out.println("Transaction Id      : " + t.getTransactionId());
-                        System.out.println("Transaction Date    : " + t.getTransactionDate());
+                        System.out.println("Transaction Date    : " + t.getTransactionDate().format(formatter));
                         System.out.println("Transaction Type    : " + t.getTransactionType());
                         System.out.println("Transaction Amount  : " + t.getAmount());
-                        if(t.getTransactionType().equalsIgnoreCase("Transfer")){
+                        if(t.getTransactionType().equalsIgnoreCase("Debit")){
+                            System.out.println("From(your account)  : " + t.getAccountNumber());
+                            System.out.println("To                  : " + t.getRelatedAccountNumber());
+                        }else if(t.getTransactionType().equalsIgnoreCase("Credit")){
                             System.out.println("From                : " + t.getRelatedAccountNumber());
                             System.out.println("To(your account)    : " + t.getAccountNumber());
                         }
@@ -326,22 +348,39 @@ public class BankService {
         try {
             // check if the account is existed or not
             Account account = accountDAO.getAccount(accNumber);
-            if (account == null) {
+            if (account == null){
                 throw new AccountNotFoundException("Account does not exist at SS-Sev bank");
             }
             // bank account already exist. But, it's already closed.
-            else if (account.getStatus().equalsIgnoreCase("closed")) {
+            else if (account.getStatus().equalsIgnoreCase("closed")){
                 throw new AccountClosedException("Account already closed.");
             }
             // Update the account
             else{
-                Customer customer = new Customer(fName, lName, email, phone, address);
                 int customerID = account.getCustomerId();
-                if(customerDAO.updateDetails(customer, customerID)){
-                    System.out.println("\nCustomer update process successful!");
+                boolean flag = false;
+                if(!fName.isEmpty()){
+                    flag = customerDAO.updateFirstName(fName, customerID);
+                }
+                if (!lName.isEmpty()) {
+                    flag = customerDAO.updateLastName(lName, customerID);
+                }
+                if(!email.isEmpty()){
+                    flag = customerDAO.updateEmail(email, customerID);
+                }
+                if (!phone.isEmpty()){
+                    flag = customerDAO.updatePhone(phone, customerID);
+                }
+                if (!address.isEmpty()){
+                    flag = customerDAO.updateAddress(address, customerID);
+                }
+
+                if(flag){
+                    System.out.println("\nCustomer update process successful!\nWould You like to update anything else....");
                 }else{
                     System.out.println("\nCustomer update process failed!");
                 }
+
             }
 
         }

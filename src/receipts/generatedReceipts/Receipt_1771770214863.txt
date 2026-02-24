@@ -1,0 +1,12 @@
+=====================================
+            BANK RECEIPT             
+=====================================
+Transaction ID      : 21
+Transaction Type    : Withdrawal
+Amount              : 300.00
+Description         : Withdrawal from account
+Transaction Date    : 22-02-2026 19:53:34
+Available Balance   : 700.0
+=====================================
+        Thank You For Banking        
+=====================================

@@ -1,0 +1,14 @@
+=====================================
+            BANK RECEIPT             
+=====================================
+Transaction ID      : 0
+Transaction Type    : Transfer
+Amount              : 300.00
+Withdrawal from      : 7701454002
+Deposited to        : 2530292350
+Description         : Deposit to account via transfer
+Transaction Date    : 22-02-2026 20:07:55
+Available Balance   : 300.0
+=====================================
+        Thank You For Banking        
+=====================================

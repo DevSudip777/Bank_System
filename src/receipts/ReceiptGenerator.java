@@ -1,19 +1,17 @@
-package reciepts;
+package receipts;
 
 import model.Account;
 import model.Transaction;
 
-import java.awt.*;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class ReceiptGenerator {
 
-    private static String path = "src/reciepts/generatedReceipts/";
+    private static final String path = "src/receipts/generatedReceipts/";
 
     public static void generateReceipt(Transaction t, Account account) {
         try{
@@ -23,7 +21,7 @@ public class ReceiptGenerator {
                 receiptDir.mkdirs();
             }
             // giving a unique file name
-            String fileName = "Receipt_" + System.currentTimeMillis() + ".txt";
+            String fileName = "Receipt_" + t.getTransactionId() + ".txt";
             File receiptFile = new File(receiptDir, fileName);
             // change the date format
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
@@ -41,15 +39,17 @@ public class ReceiptGenerator {
                 writer.newLine();
                 writer.write("Amount              : " + String.format("%.2f", t.getAmount()));
                 writer.newLine();
-                if(t.getTransactionType().equalsIgnoreCase("Transfer")) {
-                    writer.write("Withdrawal from      : " + t.getAccountNumber());
+                if ("DEBIT".equalsIgnoreCase(t.getTransactionType())) {
+                    writer.write("Transferred To      : " + t.getRelatedAccountNumber());
                     writer.newLine();
-                    writer.write("Deposited to        : " + t.getRelatedAccountNumber());
+                }else if ("CREDIT".equalsIgnoreCase(t.getTransactionType())) {
+                    writer.write("Received From       : " + t.getRelatedAccountNumber());
                     writer.newLine();
                 }
+
                 writer.write("Description         : " + t.getDescription());
                 writer.newLine();
-                writer.write("Transaction Date    : " + LocalDateTime.now().format(formatter));
+                writer.write("Transaction Date    : " + t.getTransactionDate().format(formatter));
                 writer.newLine();
                 writer.write("Available Balance   : " + account.getBalance());
                 writer.newLine();
@@ -60,10 +60,6 @@ public class ReceiptGenerator {
                 writer.write("=====================================");
                 System.out.println("\nReceipt generated successfully: " + fileName);
 
-                // Automatically open the generated receipt file after it is created
-                if(Desktop.isDesktopSupported()) {
-                    Desktop.getDesktop().open(receiptFile);
-                }
 
             }
         }

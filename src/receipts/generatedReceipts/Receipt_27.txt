@@ -1,0 +1,13 @@
+=====================================
+            BANK RECEIPT             
+=====================================
+Transaction ID      : 27
+Transaction Type    : Credit
+Amount              : 199.00
+Received From       : 4201162116
+Description         : Credited to account via transfer
+Transaction Date    : 23-02-2026 00:56:05
+Available Balance   : 498.0
+=====================================
+        Thank You For Banking        
+=====================================

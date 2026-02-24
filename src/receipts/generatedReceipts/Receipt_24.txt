@@ -1,0 +1,13 @@
+=====================================
+            BANK RECEIPT             
+=====================================
+Transaction ID      : 24
+Transaction Type    : Debit
+Amount              : 49.00
+Transferred To      : 6870983711
+Description         : Debited from account for transfer
+Transaction Date    : 23-02-2026 00:28:27
+Available Balance   : 951.0
+=====================================
+        Thank You For Banking        
+=====================================

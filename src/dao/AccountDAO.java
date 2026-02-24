@@ -29,7 +29,7 @@ public class AccountDAO {
     // getting account from database
     public Account getAccount( long accNumber) throws SQLException, AccountNotFoundException{
         // sql query preparation
-        String sql = "SELECT * FROM bankaccounts WHERE AccountNumber = ?";
+        String sql = "SELECT * FROM bankaccounts WHERE AccountNumber = ? FOR UPDATE";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql))
         {
@@ -54,6 +54,30 @@ public class AccountDAO {
 
         }
 
+    }
+    // Getting  account for transaction
+    public Account getTransferAccount(long accNumber, Connection conn) throws SQLException, AccountNotFoundException{
+        String sql = "SELECT * FROM bankaccounts WHERE AccountNumber = ? FOR UPDATE";
+        try(PreparedStatement ps = conn.prepareStatement(sql)){
+            // create connection. prepare the sql statement for execution.
+            ps.setLong(1, accNumber);
+
+            // execute query
+            ResultSet record = ps.executeQuery();
+            // extract details from the resultSet and create an object of Account class
+            boolean flag = record.next();
+            if(!flag){
+                throw new AccountNotFoundException("Account does not exist at SS_Sev bank");
+            }
+            return new Account(
+                    record.getLong("AccountNumber"),
+                    record.getInt("CustomerID"),
+                    record.getString("AccountType"),
+                    record.getDouble("Balance"),
+                    record.getString("Status"),
+                    record.getDate("OpeningDate").toLocalDate()
+            );
+        }
     }
     // close the bank account in database
     public boolean closeAccount(long accNumber) throws SQLException {
@@ -82,7 +106,6 @@ public class AccountDAO {
     }
 
     // Update the balance for transaction
-
     public boolean transactionUpdateBalance(Account account, Connection conn) throws SQLException{
         String sql = "UPDATE bankaccounts SET Balance = ? WHERE AccountNumber = ?";
         try(PreparedStatement ps = conn.prepareStatement(sql)
